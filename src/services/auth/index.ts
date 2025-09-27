@@ -1,6 +1,5 @@
-import { createAuthService } from './AuthService';
+import { createAuthService, AuthService, AuthServiceImpl } from './AuthService';
 import { firebaseAuthRepository } from '@/repositories/auth/FirebaseAuthRepository';
-import { AuthService } from './AuthService';
 
 // Service container - manages service instances and dependencies
 class ServiceContainer {
@@ -34,4 +33,4 @@ export const serviceContainer = ServiceContainer.getInstance();
 
 // Convenience exports
 export const authService = serviceContainer.getAuthService();
-export { AuthService };
+export { AuthServiceImpl, createAuthService };

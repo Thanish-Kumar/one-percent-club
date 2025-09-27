@@ -56,7 +56,7 @@ export function ProfileScreen() {
               <Avatar className="h-20 w-20">
                 <AvatarImage src={user?.photoURL || undefined} alt={user?.displayName || 'User'} />
                 <AvatarFallback className="text-lg">
-                  {getInitials(user?.displayName)}
+                  {getInitials(user?.displayName || null)}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1">
