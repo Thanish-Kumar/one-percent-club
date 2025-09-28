@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, User, Mail, Calendar, Shield } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 
 export function ProfileScreen() {
   const { user, logout, isLoading } = useAuth();
@@ -31,129 +31,72 @@ export function ProfileScreen() {
       .slice(0, 2);
   };
 
-  const formatDate = (date: Date | undefined) => {
-    if (!date) return 'N/A';
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    }).format(date);
+  const getUserDisplayName = () => {
+    if (user?.displayName) return user.displayName;
+    if (user?.firstName && user?.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    }
+    if (user?.firstName) return user.firstName;
+    if (user?.email) return user.email.split('@')[0];
+    return 'User';
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="text-center">
-          <h1 className="text-3xl font-bold mb-2">Profile</h1>
-          <p className="text-muted-foreground">Manage your account settings and preferences</p>
+    <div className="min-h-screen bg-background">
+      <div className="pt-20 pb-6 px-4">
+        <div className="max-w-2xl mx-auto">
+          <h1 className="text-3xl font-bold text-foreground mb-8 text-center">Profile</h1>
+
+          <Card>
+            <CardContent className="p-8">
+              <div className="flex flex-col items-center space-y-6">
+                {/* Profile Image */}
+                <Avatar className="h-32 w-32">
+                  <AvatarImage src={user?.photoURL || undefined} alt={getUserDisplayName()} />
+                  <AvatarFallback className="text-3xl">
+                    {getInitials(getUserDisplayName())}
+                  </AvatarFallback>
+                </Avatar>
+
+                {/* Name */}
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold text-foreground">{getUserDisplayName()}</h2>
+                </div>
+
+                {/* Company/Organization */}
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold text-muted-foreground mb-1">Company/Organization</h3>
+                  <p className="text-foreground">1% Club Member</p>
+                </div>
+
+                {/* Idea/Industry */}
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold text-muted-foreground mb-1">Idea/Industry Working On</h3>
+                  <p className="text-foreground">Business Development & Growth</p>
+                </div>
+
+                {/* Technology */}
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold text-muted-foreground mb-1">Technology Working On</h3>
+                  <p className="text-foreground">Web Development, Business Tools, Productivity Solutions</p>
+                </div>
+
+                {/* Sign Out Button */}
+                <div className="pt-4">
+                  <Button
+                    variant="destructive"
+                    onClick={handleLogout}
+                    disabled={isLoading || isLoggingOut}
+                    className="flex items-center space-x-2"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>{isLoggingOut ? 'Signing out...' : 'Sign Out'}</span>
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-
-        {/* Profile Card */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center space-x-4">
-              <Avatar className="h-20 w-20">
-                <AvatarImage src={user?.photoURL || undefined} alt={user?.displayName || 'User'} />
-                <AvatarFallback className="text-lg">
-                  {getInitials(user?.displayName || null)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <CardTitle className="text-2xl">
-                  {user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'User'}
-                </CardTitle>
-                <CardDescription className="text-base">
-                  Member since {formatDate(user?.createdAt)}
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* User Information */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="flex items-center space-x-3">
-                  <Mail className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Email</p>
-                    <p className="text-sm text-muted-foreground">{user?.email || 'N/A'}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-3">
-                  <Shield className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Email Verified</p>
-                    <p className="text-sm text-muted-foreground">
-                      {user?.emailVerified ? 'Verified' : 'Not verified'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center space-x-3">
-                  <Calendar className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Last Updated</p>
-                    <p className="text-sm text-muted-foreground">
-                      {formatDate(user?.updatedAt)}
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-3">
-                  <User className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">User ID</p>
-                    <p className="text-sm text-muted-foreground font-mono text-xs">
-                      {user?.uid || 'N/A'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Account Actions */}
-            <div className="border-t pt-6">
-              <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-                <div>
-                  <h3 className="font-semibold mb-1">Account Actions</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Manage your account settings and security
-                  </p>
-                </div>
-                <Button
-                  variant="destructive"
-                  onClick={handleLogout}
-                  disabled={isLoading || isLoggingOut}
-                  className="flex items-center space-x-2"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>{isLoggingOut ? 'Signing out...' : 'Sign Out'}</span>
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Additional Settings Placeholder */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Settings</CardTitle>
-            <CardDescription>
-              Additional settings and preferences will be available here
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">
-                More settings and customization options coming soon...
-              </p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
