@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "db:migrate": "tsx src/lib/scripts/run-migration.ts",
+    "db:test": "tsx src/lib/scripts/test-connection.ts"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.10",
@@ -27,6 +29,8 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "tsx": "^4.20.6",
+    "typescript": "^5",
+    "dotenv": "^16.4.7"
   }
 }

@@ -13,16 +13,24 @@ src/
 ├── models/                    # Domain Entities (Core Business Objects)
 │   └── User.ts
 ├── dto/                       # Data Transfer Objects
-│   └── auth.ts
+│   ├── auth.ts
+│   └── user.ts
 ├── repositories/              # Repository Interfaces & Implementations
-│   └── auth/
-│       ├── AuthRepository.ts      # Interface (Contract)
-│       └── FirebaseAuthRepository.ts # Implementation
+│   ├── auth/
+│   │   ├── AuthRepository.ts      # Interface (Contract)
+│   │   └── FirebaseAuthRepository.ts # Implementation
+│   └── user/
+│       ├── UserRepository.ts      # Interface (Contract)
+│       └── AwsRdsUserRepository.ts # AWS RDS Implementation
 ├── services/                  # Use Cases (Business Logic)
-│   └── auth/
-│       ├── AuthService.ts         # Interface & Implementation
+│   ├── auth/
+│   │   ├── AuthService.ts         # Interface & Implementation
+│   │   ├── index.ts              # Service Container (DI)
+│   │   └── README.md             # Detailed Architecture Docs
+│   └── user/
+│       ├── UserService.ts         # Interface & Implementation
 │       ├── index.ts              # Service Container (DI)
-│       └── README.md             # Detailed Architecture Docs
+│       └── README.md             # AWS RDS Integration Docs
 ├── contexts/                  # Application State Management
 │   └── AuthContext.tsx
 ├── components/               # UI Layer (Frameworks & Drivers)
@@ -33,7 +41,10 @@ src/
 │   └── ui/                   # Reusable UI Components
 └── lib/                      # External Dependencies
     ├── firebase.ts
-    └── utils.ts
+    ├── database.ts           # AWS RDS Connection
+    ├── utils.ts
+    └── migrations/           # Database Migrations
+        └── create_users_table.sql
 ```
 
 ## Clean Architecture Layers
@@ -186,9 +197,22 @@ pnpm install
 ### Environment Setup
 1. Copy `env.example` to `.env.local`
 2. Add your Firebase configuration
-3. See `FIREBASE_SETUP.md` for detailed setup instructions
+3. Add your AWS RDS configuration
+4. See `FIREBASE_SETUP.md` for Firebase setup instructions
+5. See `AWS_RDS_SETUP.md` for RDS setup instructions
 
 ### Development
+
+**Setup Database:**
+```bash
+# Test database connection
+npm run db:test
+
+# Create database tables
+npm run db:migrate
+```
+
+**Start Development Server:**
 ```bash
 npm run dev
 # or
@@ -205,7 +229,9 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 For detailed architecture documentation, see:
 - [Authentication Service Architecture](./src/services/auth/README.md)
+- [User Service & AWS RDS Integration](./src/services/user/README.md)
 - [Firebase Setup Guide](./FIREBASE_SETUP.md)
+- [AWS RDS Setup Guide](./AWS_RDS_SETUP.md)
 
 ## Learn More
 

@@ -15,7 +15,9 @@ export interface AuthService {
 }
 
 export class AuthServiceImpl implements AuthService {
-  constructor(private authRepository: AuthRepository) {}
+  constructor(
+    private authRepository: AuthRepository
+  ) {}
 
   async login(credentials: LoginRequestDTO): Promise<AuthResponseDTO> {
     // Add any business logic here (e.g., logging, analytics, validation)
@@ -40,6 +42,28 @@ export class AuthServiceImpl implements AuthService {
   async signup(userData: SignupRequestDTO): Promise<AuthResponseDTO> {
     // Add any business logic here (e.g., validation, logging, analytics)
     const response = await this.authRepository.signup(userData);
+    
+    // Business rule: Save user to RDS database after Firebase authentication
+    // Call API route instead of direct UserService call to handle server-side database operations
+    try {
+      const apiResponse = await fetch('/api/users/save', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify(response.user),
+      });
+
+      if (apiResponse.ok) {
+        const result = await apiResponse.json();
+        console.log('User synced to database:', result.user);
+      } else {
+        console.error('Failed to save user to database:', await apiResponse.text());
+      }
+    } catch (error) {
+      console.error('Failed to sync user to database:', error);
+      // Don't fail the signup if database sync fails - user is still authenticated
+    }
     
     // Business rule: New users always go to dashboard (could be onboarding later)
     response.navigationIntent = {
