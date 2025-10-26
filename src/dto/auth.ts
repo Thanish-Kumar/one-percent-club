@@ -10,6 +10,9 @@ export interface SignupRequestDTO {
   lastName: string;
   email: string;
   password: string;
+  useCase: 'Personal' | 'Professional' | 'Business';
+  goal: 'Sustainable growth' | 'Rapid growth';
+  context: string;
 }
 
 export interface AuthResponseDTO {

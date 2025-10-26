@@ -9,6 +9,9 @@ export interface User {
   emailVerified: boolean;
   createdAt?: Date;
   updatedAt?: Date;
+  useCase?: 'Personal' | 'Professional' | 'Business';
+  goal?: 'Sustainable growth' | 'Rapid growth';
+  context?: string;
 }
 
 // Firebase-specific user model (extends base User)

@@ -86,6 +86,9 @@ export class FirebaseAuthRepository implements AuthRepository {
       const user = mapFirebaseUserToUser(userCredential.user);
       user.firstName = userData.firstName;
       user.lastName = userData.lastName;
+      user.useCase = userData.useCase;
+      user.goal = userData.goal;
+      user.context = userData.context;
       
       const token = await userCredential.user.getIdToken();
 

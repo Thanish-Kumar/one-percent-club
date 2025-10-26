@@ -6,12 +6,12 @@ import { Heart, MessageCircle, Share, Users, ExternalLink } from "lucide-react"
 const posts = [
   {
     id: 1,
-    author: "Sarah Chen",
-    handle: "@sarahbuilds",
+    author: "Thanish Kumar",
+    handle: "@thanish_k",
     avatar: "/professional-woman-entrepreneur.png",
     time: "2h",
-    situation: "Struggling with customer acquisition costs getting too high",
-    action: "Implemented referral program with automated tracking",
+    situation: "Entrepreneurs in the healthcare domain faced difficulty in identifying relevant problem statements and market gaps.",
+    action: "A custom health news webapp was deployed to aggregate, filter, and contextualize domain-specific updates for rapid scanning.",
     tool: "ReferralCandy",
     toolLink: "https://referralcandy.com",
     impact: "Reduced CAC by 40% and increased customer lifetime value by 25%",

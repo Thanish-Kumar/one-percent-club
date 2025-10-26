@@ -9,6 +9,9 @@ interface SignupFormData {
   email: string;
   password: string;
   confirmPassword: string;
+  useCase: 'Personal' | 'Professional' | 'Business';
+  goal: 'Sustainable growth' | 'Rapid growth';
+  context: string;
 }
 
 export default function SignupForm() {
@@ -18,11 +21,14 @@ export default function SignupForm() {
     email: '',
     password: '',
     confirmPassword: '',
+    useCase: 'Personal',
+    goal: 'Sustainable growth',
+    context: '',
   });
   const [error, setError] = useState<string | null>(null);
   const { signup, isLoading } = useAuth();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -46,7 +52,7 @@ export default function SignupForm() {
     }
 
     try {
-      await signup(formData.firstName, formData.lastName, formData.email, formData.password);
+      await signup(formData.firstName, formData.lastName, formData.email, formData.password, formData.useCase, formData.goal, formData.context);
     } catch (err: any) {
       setError(err.message || 'Signup failed. Please try again.');
     }
@@ -144,22 +150,67 @@ export default function SignupForm() {
             onChange={handleChange}
           />
         </div>
-      </div>
 
-      <div className="flex items-center">
-        <input
-          id="agree-terms"
-          name="agree-terms"
-          type="checkbox"
-          required
-          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-        />
-        <label htmlFor="agree-terms" className="ml-2 block text-sm text-gray-900">
-          I agree to the{' '}
-          <a href="#" className="text-indigo-600 hover:text-indigo-500">
-            Terms and Conditions
-          </a>
-        </label>
+        <div>
+          <label htmlFor="useCase" className="block text-sm font-medium text-gray-700">
+            Use Case
+          </label>
+          <select
+            id="useCase"
+            name="useCase"
+            required
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900 appearance-none bg-no-repeat bg-right pr-10"
+            style={{
+              backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e\")",
+              backgroundPosition: "right 0.5rem center",
+              backgroundSize: "1.5em 1.5em"
+            }}
+            value={formData.useCase}
+            onChange={handleChange}
+          >
+            <option value="Personal">Personal</option>
+            <option value="Professional">Professional</option>
+            <option value="Business">Business</option>
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="goal" className="block text-sm font-medium text-gray-700">
+            Goal
+          </label>
+          <select
+            id="goal"
+            name="goal"
+            required
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900 appearance-none bg-no-repeat bg-right pr-10"
+            style={{
+              backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e\")",
+              backgroundPosition: "right 0.5rem center",
+              backgroundSize: "1.5em 1.5em"
+            }}
+            value={formData.goal}
+            onChange={handleChange}
+          >
+            <option value="Sustainable growth">Sustainable growth</option>
+            <option value="Rapid growth">Rapid growth</option>
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="context" className="block text-sm font-medium text-gray-700">
+            Context
+          </label>
+          <input
+            id="context"
+            name="context"
+            type="text"
+            required
+            className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            placeholder="healthcare company providing SaaS service to hospitals"
+            value={formData.context}
+            onChange={handleChange}
+          />
+        </div>
       </div>
 
       <div>
