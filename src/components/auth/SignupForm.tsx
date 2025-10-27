@@ -154,6 +154,11 @@ export default function SignupForm() {
         <div>
           <label htmlFor="useCase" className="block text-sm font-medium text-gray-700">
             Use Case
+            <span className="inline-block ml-2 cursor-pointer" title="Select whether you're using this app for personal, professional, or business purposes">
+              <svg className="w-4 h-4 inline-block text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </span>
           </label>
           <select
             id="useCase"
@@ -177,6 +182,11 @@ export default function SignupForm() {
         <div>
           <label htmlFor="goal" className="block text-sm font-medium text-gray-700">
             Goal
+            <span className="inline-block ml-2 cursor-pointer" title="Select your preferred growth approach - sustainable for steady progress or rapid for fast-paced growth">
+              <svg className="w-4 h-4 inline-block text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </span>
           </label>
           <select
             id="goal"
@@ -198,7 +208,12 @@ export default function SignupForm() {
 
         <div>
           <label htmlFor="context" className="block text-sm font-medium text-gray-700">
-            Context
+            About your business?
+            <span className="inline-block ml-2 cursor-pointer" title="Describe your business or work context (e.g., healthcare company providing SaaS services to hospitals)">
+              <svg className="w-4 h-4 inline-block text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </span>
           </label>
           <input
             id="context"
