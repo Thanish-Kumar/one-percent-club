@@ -1,6 +1,7 @@
 "use client"
 import { Home, BookOpen, User, Briefcase, Bot } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 
 interface NavigationProps {
   activeScreen: "home" | "journal" | "assistant" | "profile" | "workspace"
@@ -60,6 +61,10 @@ export function Navigation({ activeScreen, onScreenChange }: NavigationProps) {
           <User className="h-4 w-4" />
           <span className="hidden sm:inline">Profile</span>
         </Button>
+
+        <div className="w-px h-6 bg-border" />
+        
+        <ThemeToggle />
       </div>
     </div>
   )
