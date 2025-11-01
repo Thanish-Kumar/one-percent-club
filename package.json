@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "db:migrate": "tsx src/lib/scripts/run-migration.ts",
+    "db:migrate:journal": "tsx src/lib/scripts/run-journal-migration.ts",
     "db:test": "tsx src/lib/scripts/test-connection.ts"
   },
   "dependencies": {

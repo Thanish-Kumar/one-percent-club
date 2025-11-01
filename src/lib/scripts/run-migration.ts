@@ -21,22 +21,35 @@ async function runMigration() {
     console.log('Connecting to database...');
     const client = await pool.connect();
     
-    console.log('Reading migration file...');
-    const migrationSQL = readFileSync(
+    // Run users table migration
+    console.log('Reading users table migration...');
+    const usersMigrationSQL = readFileSync(
       join(process.cwd(), 'src/lib/migrations/create_users_table.sql'),
       'utf-8'
     );
     
-    console.log('Running migration...');
-    await client.query(migrationSQL);
+    console.log('Running users table migration...');
+    await client.query(usersMigrationSQL);
+    console.log('✅ Users table migration completed!');
     
-    console.log('Migration completed successfully!');
+    // Run journal entries table migration
+    console.log('\nReading journal entries table migration...');
+    const journalMigrationSQL = readFileSync(
+      join(process.cwd(), 'src/lib/migrations/create_journal_entries_table.sql'),
+      'utf-8'
+    );
+    
+    console.log('Running journal entries table migration...');
+    await client.query(journalMigrationSQL);
+    console.log('✅ Journal entries table migration completed!');
+    
+    console.log('\n🎉 All migrations completed successfully!');
     client.release();
     await pool.end();
     
     process.exit(0);
   } catch (error) {
-    console.error('Migration failed:', error);
+    console.error('❌ Migration failed:', error);
     process.exit(1);
   }
 }
