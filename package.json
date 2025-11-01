@@ -8,17 +8,21 @@
     "start": "next start",
     "db:migrate": "tsx src/lib/scripts/run-migration.ts",
     "db:migrate:journal": "tsx src/lib/scripts/run-journal-migration.ts",
+    "db:migrate:crew-responses": "tsx src/lib/scripts/run-crew-response-migration.ts",
+    "db:migrate:crew-responses-update": "tsx src/lib/scripts/run-crew-response-update-migration.ts",
     "db:test": "tsx src/lib/scripts/test-connection.ts"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.10",
     "@radix-ui/react-slot": "^1.2.3",
+    "@types/node-cron": "^3.0.11",
     "@types/pg": "^8.15.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "firebase": "^12.3.0",
     "lucide-react": "^0.544.0",
     "next": "15.5.3",
+    "node-cron": "^4.2.1",
     "pg": "^8.16.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
@@ -29,9 +33,9 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^16.4.7",
     "tailwindcss": "^4",
     "tsx": "^4.20.6",
-    "typescript": "^5",
-    "dotenv": "^16.4.7"
+    "typescript": "^5"
   }
 }
