@@ -154,6 +154,57 @@ export class AwsRdsCrewResponseRepository implements CrewResponseRepository {
     }
   }
 
+  /**
+   * Check if a crew response exists for a user for today
+   * Returns true if entry exists, false otherwise
+   */
+  async hasResponseForToday(userUid: string): Promise<boolean> {
+    const client = await this.pool.connect();
+    
+    try {
+      const query = `
+        SELECT EXISTS(
+          SELECT 1 FROM crew_responses 
+          WHERE user_uid = $1 
+          AND DATE(created_at) = CURRENT_DATE
+        ) as exists
+      `;
+      const result = await client.query(query, [userUid]);
+      
+      return result.rows[0].exists;
+    } catch (error: any) {
+      throw handleDatabaseError(error);
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Get crew response for a user for today (if exists)
+   */
+  async getResponseForToday(userUid: string): Promise<CrewResponseDatabaseDTO | null> {
+    const client = await this.pool.connect();
+    
+    try {
+      const query = `
+        SELECT * FROM crew_responses 
+        WHERE user_uid = $1 
+        AND DATE(created_at) = CURRENT_DATE
+      `;
+      const result = await client.query(query, [userUid]);
+      
+      if (result.rows.length === 0) {
+        return null;
+      }
+      
+      return mapRowToCrewResponse(result.rows[0]);
+    } catch (error: any) {
+      throw handleDatabaseError(error);
+    } finally {
+      client.release();
+    }
+  }
+
   async getCrewResponses(query: GetCrewResponsesQueryDTO): Promise<CrewResponseDatabaseDTO[]> {
     const client = await this.pool.connect();
     

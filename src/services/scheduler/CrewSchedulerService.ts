@@ -127,11 +127,23 @@ export class CrewSchedulerService {
       let successCount = 0;
       let errorCount = 0;
 
+      let skippedCount = 0;
+
       for (const user of users) {
         try {
           // Skip users without context or goal (optional - remove if you want to process all users)
           if (!user.context && !user.goal) {
-            console.log(`Skipping user ${user.uid} - no context or goal`);
+            console.log(`⏭️  Skipping user ${user.uid} - no context or goal`);
+            skippedCount++;
+            continue;
+          }
+
+          // Check if questions are already captured for this user today
+          const hasResponseToday = await awsRdsCrewResponseRepository.hasResponseForToday(user.uid);
+          
+          if (hasResponseToday) {
+            console.log(`⏭️  Skipping user ${user.uid} - questions already captured today`);
+            skippedCount++;
             continue;
           }
 
@@ -141,7 +153,7 @@ export class CrewSchedulerService {
             customer_goal_latest: user.goal || null,
           };
 
-          console.log(`Processing user ${user.uid}...`);
+          console.log(`🔄 Processing user ${user.uid}...`);
 
           // Make POST request to the crew API
           // Note: Crew API can take 20+ seconds to respond, so allow sufficient time
@@ -177,7 +189,7 @@ export class CrewSchedulerService {
             console.warn(`⚠️  User ${user.uid}: Received simple response format (may not be complete)`);
           }
 
-          // Save or update the response to the database (one entry per user per day)
+          // Save the response to the database (will be new entry for today)
           const savedResponse = await awsRdsCrewResponseRepository.upsertCrewResponse({
             userUid: user.uid,
             requestContext: user.context,
@@ -185,17 +197,16 @@ export class CrewSchedulerService {
             responseData: responseData,
           });
 
-          const action = savedResponse.updatedAt ? 'Updated' : 'Created';
-          console.log(`✅ ${action} response for user ${user.uid} (ID: ${savedResponse.id})`);
+          console.log(`✅ Created response for user ${user.uid} (ID: ${savedResponse.id})`);
           successCount++;
         } catch (error) {
-          console.error(`Error processing user ${user.uid}:`, error);
+          console.error(`❌ Error processing user ${user.uid}:`, error);
           errorCount++;
         }
       }
 
       console.log(`[${new Date().toISOString()}] Crew scheduler task completed.`);
-      console.log(`Summary: ${successCount} succeeded, ${errorCount} failed`);
+      console.log(`Summary: ${successCount} created, ${skippedCount} skipped (already captured today), ${errorCount} failed`);
     } catch (error) {
       console.error('Error in scheduled task:', error);
     }

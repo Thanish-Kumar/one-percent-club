@@ -29,6 +29,16 @@ export interface CrewResponseRepository {
   getCrewResponseById(id: number): Promise<CrewResponseDatabaseDTO | null>;
 
   /**
+   * Check if a crew response exists for a user for today
+   */
+  hasResponseForToday(userUid: string): Promise<boolean>;
+
+  /**
+   * Get crew response for a user for today (if exists)
+   */
+  getResponseForToday(userUid: string): Promise<CrewResponseDatabaseDTO | null>;
+
+  /**
    * Get crew responses with query parameters
    */
   getCrewResponses(query: GetCrewResponsesQueryDTO): Promise<CrewResponseDatabaseDTO[]>;
