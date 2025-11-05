@@ -4,12 +4,75 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Calendar as CalendarIcon, Save, Loader2 } from "lucide-react"
+import { Calendar as CalendarIcon, Save, Loader2, Edit3, CheckSquare, PencilLine } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { useAuth } from "@/contexts/AuthContext"
+import { Input } from "@/components/ui/input"
+
+type JournalMode = "manual" | "auto"
+
+interface Question {
+  id: number
+  question: string
+  options: string[]
+}
+
+const JOURNAL_QUESTIONS: Question[] = [
+  {
+    id: 1,
+    question: "How productive was your day today?",
+    options: ["Very Productive", "Moderately Productive", "Not Productive"]
+  },
+  {
+    id: 2,
+    question: "How would you rate your energy levels?",
+    options: ["High Energy", "Moderate Energy", "Low Energy"]
+  },
+  {
+    id: 3,
+    question: "Did you make progress on your key goals?",
+    options: ["Significant Progress", "Some Progress", "No Progress"]
+  },
+  {
+    id: 4,
+    question: "How was your focus and concentration?",
+    options: ["Excellent Focus", "Fair Focus", "Poor Focus"]
+  },
+  {
+    id: 5,
+    question: "Did you face any major challenges?",
+    options: ["No Challenges", "Minor Challenges", "Major Challenges"]
+  },
+  {
+    id: 6,
+    question: "How satisfied are you with today's outcomes?",
+    options: ["Very Satisfied", "Somewhat Satisfied", "Not Satisfied"]
+  },
+  {
+    id: 7,
+    question: "Did you learn something new today?",
+    options: ["Learned a Lot", "Learned Something", "Learned Nothing"]
+  },
+  {
+    id: 8,
+    question: "How well did you manage your time?",
+    options: ["Excellent", "Good", "Poor"]
+  },
+  {
+    id: 9,
+    question: "Did you collaborate effectively with others?",
+    options: ["Very Effective", "Somewhat Effective", "Not Effective"]
+  },
+  {
+    id: 10,
+    question: "How do you feel about tomorrow?",
+    options: ["Excited & Ready", "Neutral", "Anxious or Uncertain"]
+  }
+]
 
 export function JournalingScreen() {
   const { user } = useAuth()
+  const [mode, setMode] = useState<JournalMode>("manual")
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [journalEntry, setJournalEntry] = useState("")
   const [showCalendar, setShowCalendar] = useState(false)
@@ -18,6 +81,9 @@ export function JournalingScreen() {
   const [entryDates, setEntryDates] = useState<string[]>([])
   const [currentEntryId, setCurrentEntryId] = useState<number | null>(null)
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle")
+  const [autoAnswers, setAutoAnswers] = useState<Record<number, string>>({})
+  const [customInputActive, setCustomInputActive] = useState<Record<number, boolean>>({})
+  const [customInputValues, setCustomInputValues] = useState<Record<number, string>>({})
 
   // Format date to ISO string (YYYY-MM-DD)
   const formatDateToISO = (date: Date): string => {
@@ -40,21 +106,155 @@ export function JournalingScreen() {
         if (data) {
           setJournalEntry(data.content)
           setCurrentEntryId(data.id)
+          
+          // Try to parse auto mode answers if present
+          try {
+            const parsedAnswers = parseAutoAnswers(data.content)
+            if (parsedAnswers) {
+              setAutoAnswers(parsedAnswers)
+              // Check which answers are custom (not in predefined options)
+              const customActive: Record<number, boolean> = {}
+              const customValues: Record<number, string> = {}
+              JOURNAL_QUESTIONS.forEach(q => {
+                const answer = parsedAnswers[q.id]
+                if (answer && !q.options.includes(answer)) {
+                  customActive[q.id] = true
+                  customValues[q.id] = answer
+                }
+              })
+              setCustomInputActive(customActive)
+              setCustomInputValues(customValues)
+            } else {
+              setAutoAnswers({})
+              setCustomInputActive({})
+              setCustomInputValues({})
+            }
+          } catch {
+            setAutoAnswers({})
+            setCustomInputActive({})
+            setCustomInputValues({})
+          }
         } else {
           setJournalEntry("")
           setCurrentEntryId(null)
+          setAutoAnswers({})
+          setCustomInputActive({})
+          setCustomInputValues({})
         }
       } else {
         setJournalEntry("")
         setCurrentEntryId(null)
+        setAutoAnswers({})
+        setCustomInputActive({})
+        setCustomInputValues({})
       }
     } catch (error) {
       console.error("Error loading journal entry:", error)
       setJournalEntry("")
       setCurrentEntryId(null)
+      setAutoAnswers({})
+      setCustomInputActive({})
+      setCustomInputValues({})
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // Parse auto mode answers from journal entry
+  const parseAutoAnswers = (content: string): Record<number, string> | null => {
+    const autoModeMarker = "## Auto Journal Entry"
+    if (!content.includes(autoModeMarker)) return null
+    
+    const answers: Record<number, string> = {}
+    const lines = content.split('\n')
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]
+      const match = line.match(/^\*\*Q(\d+):\*\*.*Answer: (.+)$/)
+      if (match) {
+        const questionId = parseInt(match[1])
+        const answer = match[2]
+        answers[questionId] = answer
+      }
+    }
+    
+    return Object.keys(answers).length > 0 ? answers : null
+  }
+
+  // Handle auto mode answer selection
+  const handleAutoAnswer = (questionId: number, answer: string) => {
+    setAutoAnswers(prev => ({
+      ...prev,
+      [questionId]: answer
+    }))
+    // Deactivate custom input when a button is clicked (but preserve the typed text)
+    setCustomInputActive(prev => ({
+      ...prev,
+      [questionId]: false
+    }))
+  }
+
+  // Handle custom input activation
+  const handleCustomInputClick = (questionId: number) => {
+    setCustomInputActive(prev => ({
+      ...prev,
+      [questionId]: true
+    }))
+    // Set the custom input value as the answer if it exists, otherwise clear the answer
+    if (customInputValues[questionId]?.trim()) {
+      setAutoAnswers(prev => ({
+        ...prev,
+        [questionId]: customInputValues[questionId].trim()
+      }))
+    } else {
+      setAutoAnswers(prev => {
+        const newAnswers = { ...prev }
+        delete newAnswers[questionId]
+        return newAnswers
+      })
+    }
+  }
+
+  // Handle custom input change
+  const handleCustomInputChange = (questionId: number, value: string) => {
+    // Always save the typed value
+    setCustomInputValues(prev => ({
+      ...prev,
+      [questionId]: value
+    }))
+    // Update the answer only if custom input is active
+    if (customInputActive[questionId]) {
+      if (value.trim()) {
+        setAutoAnswers(prev => ({
+          ...prev,
+          [questionId]: value.trim()
+        }))
+      } else {
+        setAutoAnswers(prev => {
+          const newAnswers = { ...prev }
+          delete newAnswers[questionId]
+          return newAnswers
+        })
+      }
+    }
+  }
+
+  // Generate content from auto mode answers
+  const generateAutoContent = (): string => {
+    let content = "## Auto Journal Entry\n\n"
+    
+    JOURNAL_QUESTIONS.forEach(q => {
+      const answer = autoAnswers[q.id] || "Not answered"
+      content += `**Q${q.id}:** ${q.question}\nAnswer: ${answer}\n\n`
+    })
+    
+    return content
+  }
+
+  // Save auto mode entry
+  const saveAutoEntry = async () => {
+    const content = generateAutoContent()
+    await saveEntryWithContent(content)
   }
 
   // Load dates that have entries for the current month
@@ -77,8 +277,8 @@ export function JournalingScreen() {
     }
   }
 
-  // Save journal entry
-  const saveEntry = async () => {
+  // Generic save function
+  const saveEntryWithContent = async (content: string) => {
     if (!user) return
 
     setIsSaving(true)
@@ -93,7 +293,7 @@ export function JournalingScreen() {
         body: JSON.stringify({
           userUid: user.uid,
           entryDate: formatDateToISO(selectedDate),
-          content: journalEntry,
+          content: content,
         }),
       })
 
@@ -123,6 +323,11 @@ export function JournalingScreen() {
     } finally {
       setIsSaving(false)
     }
+  }
+
+  // Save journal entry (manual mode)
+  const saveEntry = async () => {
+    await saveEntryWithContent(journalEntry)
   }
 
   // Handle date selection from calendar
@@ -182,7 +387,12 @@ export function JournalingScreen() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Current entry:</span>
-                    <span className="font-medium">{wordCount} words</span>
+                    <span className="font-medium">
+                      {mode === "manual" 
+                        ? `${wordCount} words`
+                        : `${Object.keys(autoAnswers).length}/10 answered`
+                      }
+                    </span>
                   </div>
                 </CardContent>
               </Card>
@@ -190,12 +400,14 @@ export function JournalingScreen() {
 
             {/* Journal entry area */}
             <div className="lg:col-span-2">
-              <Card className="h-[calc(100vh-8rem)] flex flex-col">
-                <CardHeader>
+              <Card className={`flex flex-col ${mode === "manual" ? "h-[calc(100vh-8rem)]" : ""}`}>
+                <CardHeader className="flex-shrink-0">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <CalendarIcon className="h-5 w-5 text-primary" />
-                      <h3 className="font-semibold">Business Journal</h3>
+                      <h3 className="font-semibold">
+                        {mode === "manual" ? "Business Journal" : "Quick Journal"}
+                      </h3>
                     </div>
                     <Button
                       variant="outline"
@@ -206,21 +418,44 @@ export function JournalingScreen() {
                       <CalendarIcon className="h-4 w-4" />
                     </Button>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedDate.toLocaleDateString("en-US", {
-                      weekday: "long",
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </p>
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="text-sm text-muted-foreground">
+                      {selectedDate.toLocaleDateString("en-US", {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </p>
+                    {/* Mode Toggle */}
+                    <div className="inline-flex rounded-lg border border-border p-1 bg-muted">
+                      <Button
+                        variant={mode === "manual" ? "default" : "ghost"}
+                        size="sm"
+                        onClick={() => setMode("manual")}
+                        className="rounded-md h-7 px-2 text-xs"
+                      >
+                        <Edit3 className="h-3 w-3 mr-1" />
+                        Manual
+                      </Button>
+                      <Button
+                        variant={mode === "auto" ? "default" : "ghost"}
+                        size="sm"
+                        onClick={() => setMode("auto")}
+                        className="rounded-md h-7 px-2 text-xs"
+                      >
+                        <CheckSquare className="h-3 w-3 mr-1" />
+                        Auto
+                      </Button>
+                    </div>
+                  </div>
                 </CardHeader>
-                <CardContent className="flex-1 flex flex-col">
+                <CardContent className={`flex flex-col ${mode === "manual" ? "flex-1" : "flex-grow"}`}>
                   {isLoading ? (
                     <div className="flex-1 flex items-center justify-center">
                       <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                     </div>
-                  ) : (
+                  ) : mode === "manual" ? (
                     <>
                       <Textarea
                         placeholder="Document your business journey today... What challenges did you face? What decisions did you make? What insights did you gain? What are your next steps?"
@@ -235,6 +470,78 @@ export function JournalingScreen() {
                         <Button
                           onClick={saveEntry}
                           disabled={isSaving || !journalEntry.trim()}
+                          className={
+                            saveStatus === "saved"
+                              ? "bg-green-600 hover:bg-green-700"
+                              : saveStatus === "error"
+                              ? "bg-red-600 hover:bg-red-700"
+                              : ""
+                          }
+                        >
+                          {isSaving ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <Save className="h-4 w-4 mr-2" />
+                          )}
+                          {getSaveButtonText()}
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="space-y-6 pb-4">
+                        {JOURNAL_QUESTIONS.map((q) => (
+                          <div key={q.id} className="space-y-3">
+                            <h4 className="font-medium text-sm">
+                              {q.id}. {q.question}
+                            </h4>
+                            <div className="grid grid-cols-2 gap-2">
+                              {q.options.map((option) => (
+                                <Button
+                                  key={option}
+                                  variant={autoAnswers[q.id] === option && !customInputActive[q.id] ? "default" : "outline"}
+                                  className="justify-start text-left h-auto py-3 px-4 min-h-[52px]"
+                                  onClick={() => handleAutoAnswer(q.id, option)}
+                                >
+                                  {option}
+                                </Button>
+                              ))}
+                              {/* Custom input option */}
+                              <div className="relative min-h-[52px] flex items-center">
+                                {!customInputActive[q.id] ? (
+                                  <Button
+                                    variant={customInputValues[q.id]?.trim() ? "secondary" : "outline"}
+                                    className="justify-start text-left h-auto py-3 px-4 flex items-center gap-2 min-h-[52px] w-full"
+                                    onClick={() => handleCustomInputClick(q.id)}
+                                  >
+                                    <PencilLine className="h-4 w-4 flex-shrink-0" />
+                                    <span className="truncate">{customInputValues[q.id]?.trim() || "Type Your Own"}</span>
+                                  </Button>
+                                ) : (
+                                  <>
+                                    <Input
+                                      type="text"
+                                      placeholder="Enter your response..."
+                                      value={customInputValues[q.id] || ""}
+                                      onChange={(e) => handleCustomInputChange(q.id, e.target.value)}
+                                      className="h-[52px] pr-10 w-full"
+                                      autoFocus
+                                    />
+                                    <PencilLine className="h-4 w-4 text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex items-center justify-between pt-4 mt-4 border-t flex-shrink-0">
+                        <span className="text-sm text-muted-foreground">
+                          {Object.keys(autoAnswers).length} of 10 questions answered
+                        </span>
+                        <Button
+                          onClick={saveAutoEntry}
+                          disabled={isSaving || Object.keys(autoAnswers).length === 0}
                           className={
                             saveStatus === "saved"
                               ? "bg-green-600 hover:bg-green-700"
