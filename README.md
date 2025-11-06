@@ -208,8 +208,13 @@ pnpm install
 # Test database connection
 npm run db:test
 
-# Create database tables
+# Create all database tables
 npm run db:migrate
+
+# Or run specific migrations
+npm run db:migrate:journal              # Journal entries table
+npm run db:migrate:journal-questions    # Journal questions table (NEW!)
+npm run db:migrate:crew-responses       # Crew AI responses table
 ```
 
 **Start Development Server:**
@@ -232,6 +237,20 @@ For detailed architecture documentation, see:
 - [User Service & AWS RDS Integration](./src/services/user/README.md)
 - [Firebase Setup Guide](./FIREBASE_SETUP.md)
 - [AWS RDS Setup Guide](./AWS_RDS_SETUP.md)
+
+## Feature Documentation
+
+### Journal System
+- **[Journal Feature Guide](./JOURNAL_FEATURE_GUIDE.md)** - Complete journal feature documentation
+- **[Journal Quick Start](./JOURNAL_QUICK_START.md)** - Quick setup and usage guide
+
+### Journal Questions (User-Specific Question Sets)
+- **[Journal Questions User-Specific Guide](./JOURNAL_QUESTIONS_USER_SPECIFIC_GUIDE.md)** - Complete guide for user-specific question sets
+- **[Journal Questions Schema Update](./JOURNAL_QUESTIONS_SCHEMA_UPDATE.md)** - Schema change quick reference
+
+### Crew AI Scheduler
+- **[Crew Scheduler Guide](./CREW_SCHEDULER_GUIDE.md)** - Complete crew AI scheduler documentation
+- **[Crew Scheduler Quick Start](./CREW_SCHEDULER_QUICK_START.md)** - Quick setup and usage
 
 ## Learn More
 

@@ -17,59 +17,6 @@ interface Question {
   options: string[]
 }
 
-const JOURNAL_QUESTIONS: Question[] = [
-  {
-    id: 1,
-    question: "How productive was your day today?",
-    options: ["Very Productive", "Moderately Productive", "Not Productive"]
-  },
-  {
-    id: 2,
-    question: "How would you rate your energy levels?",
-    options: ["High Energy", "Moderate Energy", "Low Energy"]
-  },
-  {
-    id: 3,
-    question: "Did you make progress on your key goals?",
-    options: ["Significant Progress", "Some Progress", "No Progress"]
-  },
-  {
-    id: 4,
-    question: "How was your focus and concentration?",
-    options: ["Excellent Focus", "Fair Focus", "Poor Focus"]
-  },
-  {
-    id: 5,
-    question: "Did you face any major challenges?",
-    options: ["No Challenges", "Minor Challenges", "Major Challenges"]
-  },
-  {
-    id: 6,
-    question: "How satisfied are you with today's outcomes?",
-    options: ["Very Satisfied", "Somewhat Satisfied", "Not Satisfied"]
-  },
-  {
-    id: 7,
-    question: "Did you learn something new today?",
-    options: ["Learned a Lot", "Learned Something", "Learned Nothing"]
-  },
-  {
-    id: 8,
-    question: "How well did you manage your time?",
-    options: ["Excellent", "Good", "Poor"]
-  },
-  {
-    id: 9,
-    question: "Did you collaborate effectively with others?",
-    options: ["Very Effective", "Somewhat Effective", "Not Effective"]
-  },
-  {
-    id: 10,
-    question: "How do you feel about tomorrow?",
-    options: ["Excited & Ready", "Neutral", "Anxious or Uncertain"]
-  }
-]
-
 export function JournalingScreen() {
   const { user } = useAuth()
   const [mode, setMode] = useState<JournalMode>("manual")
@@ -84,10 +31,38 @@ export function JournalingScreen() {
   const [autoAnswers, setAutoAnswers] = useState<Record<number, string>>({})
   const [customInputActive, setCustomInputActive] = useState<Record<number, boolean>>({})
   const [customInputValues, setCustomInputValues] = useState<Record<number, string>>({})
+  const [questions, setQuestions] = useState<Question[]>([])
+  const [questionsLoading, setQuestionsLoading] = useState(false)
 
   // Format date to ISO string (YYYY-MM-DD)
   const formatDateToISO = (date: Date): string => {
     return date.toISOString().split("T")[0]
+  }
+
+  // Load journal questions from API for specific user and date
+  const loadQuestions = async (date: Date) => {
+    if (!user) return
+    
+    setQuestionsLoading(true)
+    try {
+      const dateISO = formatDateToISO(date)
+      const response = await fetch(
+        `/api/journal-questions?userUid=${user.uid}&entryDate=${dateISO}`
+      )
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success && data.questions) {
+          setQuestions(data.questions)
+        }
+      } else {
+        console.error("Failed to load questions")
+      }
+    } catch (error) {
+      console.error("Error loading journal questions:", error)
+    } finally {
+      setQuestionsLoading(false)
+    }
   }
 
   // Load entry for selected date
@@ -115,7 +90,7 @@ export function JournalingScreen() {
               // Check which answers are custom (not in predefined options)
               const customActive: Record<number, boolean> = {}
               const customValues: Record<number, string> = {}
-              JOURNAL_QUESTIONS.forEach(q => {
+              questions.forEach(q => {
                 const answer = parsedAnswers[q.id]
                 if (answer && !q.options.includes(answer)) {
                   customActive[q.id] = true
@@ -243,7 +218,7 @@ export function JournalingScreen() {
   const generateAutoContent = (): string => {
     let content = "## Auto Journal Entry\n\n"
     
-    JOURNAL_QUESTIONS.forEach(q => {
+    questions.forEach(q => {
       const answer = autoAnswers[q.id] || "Not answered"
       content += `**Q${q.id}:** ${q.question}\nAnswer: ${answer}\n\n`
     })
@@ -343,10 +318,13 @@ export function JournalingScreen() {
     .split(/\s+/)
     .filter((word) => word.length > 0).length
 
-  // Load entry when component mounts or date changes
+  // Load entry and questions when component mounts or date/user changes
   useEffect(() => {
-    loadEntry(selectedDate)
-    loadEntryDates(selectedDate)
+    if (user) {
+      loadQuestions(selectedDate)
+      loadEntry(selectedDate)
+      loadEntryDates(selectedDate)
+    }
   }, [selectedDate, user])
 
   const getSaveButtonText = () => {
@@ -390,7 +368,7 @@ export function JournalingScreen() {
                     <span className="font-medium">
                       {mode === "manual" 
                         ? `${wordCount} words`
-                        : `${Object.keys(autoAnswers).length}/10 answered`
+                        : `${Object.keys(autoAnswers).length}/${questions.length} answered`
                       }
                     </span>
                   </div>
@@ -487,10 +465,19 @@ export function JournalingScreen() {
                         </Button>
                       </div>
                     </>
+                  ) : questionsLoading ? (
+                    <div className="flex-1 flex items-center justify-center">
+                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                      <span className="ml-2 text-muted-foreground">Loading questions...</span>
+                    </div>
+                  ) : questions.length === 0 ? (
+                    <div className="flex-1 flex items-center justify-center">
+                      <p className="text-muted-foreground">No questions available. Please contact support.</p>
+                    </div>
                   ) : (
                     <>
                       <div className="space-y-6 pb-4">
-                        {JOURNAL_QUESTIONS.map((q) => (
+                        {questions.map((q) => (
                           <div key={q.id} className="space-y-3">
                             <h4 className="font-medium text-sm">
                               {q.id}. {q.question}
@@ -537,7 +524,7 @@ export function JournalingScreen() {
                       </div>
                       <div className="flex items-center justify-between pt-4 mt-4 border-t flex-shrink-0">
                         <span className="text-sm text-muted-foreground">
-                          {Object.keys(autoAnswers).length} of 10 questions answered
+                          {Object.keys(autoAnswers).length} of {questions.length} questions answered
                         </span>
                         <Button
                           onClick={saveAutoEntry}
