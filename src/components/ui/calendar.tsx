@@ -9,6 +9,8 @@ interface CalendarProps {
   selectedDate: Date
   onDateSelect: (date: Date) => void
   highlightedDates?: string[] // ISO date strings (YYYY-MM-DD)
+  minDate?: Date // Minimum selectable date (e.g., account creation date)
+  maxDate?: Date // Maximum selectable date (typically today)
   className?: string
 }
 
@@ -16,6 +18,8 @@ export function Calendar({
   selectedDate,
   onDateSelect,
   highlightedDates = [],
+  minDate,
+  maxDate,
   className,
 }: CalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date(selectedDate))
@@ -64,6 +68,26 @@ export function Calendar({
     return isSameDay(date, new Date())
   }
 
+  const isDateDisabled = (date: Date) => {
+    if (minDate) {
+      const minDateMidnight = new Date(minDate)
+      minDateMidnight.setHours(0, 0, 0, 0)
+      const dateMidnight = new Date(date)
+      dateMidnight.setHours(0, 0, 0, 0)
+      if (dateMidnight < minDateMidnight) return true
+    }
+    
+    if (maxDate) {
+      const maxDateMidnight = new Date(maxDate)
+      maxDateMidnight.setHours(0, 0, 0, 0)
+      const dateMidnight = new Date(date)
+      dateMidnight.setHours(0, 0, 0, 0)
+      if (dateMidnight > maxDateMidnight) return true
+    }
+    
+    return false
+  }
+
   const handlePreviousMonth = () => {
     setCurrentMonth(
       new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1)
@@ -82,6 +106,10 @@ export function Calendar({
       currentMonth.getMonth(),
       day
     )
+    
+    // Don't allow selecting disabled dates
+    if (isDateDisabled(newDate)) return
+    
     onDateSelect(newDate)
   }
 
@@ -107,18 +135,21 @@ export function Calendar({
       const isSelected = isSameDay(date, selectedDate)
       const isTodayDate = isToday(date)
       const hasEntry = highlightedDates.includes(dateISO)
+      const disabled = isDateDisabled(date)
 
       days.push(
         <button
           key={day}
           onClick={() => handleDateClick(day)}
+          disabled={disabled}
           className={cn(
             "h-10 w-10 rounded-md text-sm font-medium transition-colors",
             "hover:bg-accent hover:text-accent-foreground",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
             isSelected && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
             isTodayDate && !isSelected && "border-2 border-primary",
-            hasEntry && !isSelected && "bg-accent/50 font-semibold"
+            hasEntry && !isSelected && "bg-accent/50 font-semibold",
+            disabled && "opacity-40 cursor-not-allowed hover:bg-transparent hover:text-current"
           )}
         >
           {day}

@@ -52,7 +52,22 @@ export function JournalingScreen() {
     return selectedDateMidnight > today
   }
 
+  // Check if selected date is before account creation
+  const isBeforeAccountCreation = (date: Date): boolean => {
+    if (!user?.createdAt) return false
+    
+    const accountCreationDate = new Date(user.createdAt)
+    accountCreationDate.setHours(0, 0, 0, 0) // Reset to midnight
+    
+    const selectedDateMidnight = new Date(date)
+    selectedDateMidnight.setHours(0, 0, 0, 0) // Reset to midnight
+    
+    return selectedDateMidnight < accountCreationDate
+  }
+
   const isDateInFuture = isFutureDate(selectedDate)
+  const isDateBeforeAccountCreation = isBeforeAccountCreation(selectedDate)
+  const isDateRestricted = isDateInFuture || isDateBeforeAccountCreation
 
   // Load journal questions from API for specific user and date
   const loadQuestions = async (date: Date) => {
@@ -382,6 +397,8 @@ export function JournalingScreen() {
                 selectedDate={selectedDate}
                 onDateSelect={handleDateSelect}
                 highlightedDates={entryDates}
+                minDate={user?.createdAt ? new Date(user.createdAt) : undefined}
+                maxDate={new Date()}
               />
               
               {/* Quick stats */}
@@ -437,6 +454,24 @@ export function JournalingScreen() {
                       })}
                     </p>
                     <div className="flex items-center gap-2">
+                      {/* Question Source Indicator */}
+                      {mode === "auto" && questionsSource && !questionsLoading && !isDateRestricted && (
+                        <span className="text-xs text-muted-foreground px-2 py-1 bg-muted/50 rounded">
+                          {questionsSource === "default" ? "📋 Default Questions" : "✨ Custom Questions"}
+                        </span>
+                      )}
+                      
+                      {/* Date Restriction Warning */}
+                      {isDateInFuture && (
+                        <span className="text-xs text-amber-600 dark:text-amber-500 px-2 py-1 bg-amber-50 dark:bg-amber-950/30 rounded">
+                          ⏰ Future Date - Journaling Disabled
+                        </span>
+                      )}
+                      {isDateBeforeAccountCreation && (
+                        <span className="text-xs text-amber-600 dark:text-amber-500 px-2 py-1 bg-amber-50 dark:bg-amber-950/30 rounded">
+                          🔒 Before Account Creation
+                        </span>
+                      )}
                       
                       {/* Mode Toggle */}
                       <div className="inline-flex rounded-lg border border-border p-1 bg-muted">
@@ -445,7 +480,7 @@ export function JournalingScreen() {
                           size="sm"
                           onClick={() => setMode("manual")}
                           className="rounded-md h-7 px-2 text-xs"
-                          disabled={isDateInFuture}
+                          disabled={isDateRestricted}
                         >
                           <Edit3 className="h-3 w-3 mr-1" />
                           Manual
@@ -455,7 +490,7 @@ export function JournalingScreen() {
                           size="sm"
                           onClick={() => setMode("auto")}
                           className="rounded-md h-7 px-2 text-xs"
-                          disabled={isDateInFuture}
+                          disabled={isDateRestricted}
                         >
                           <CheckSquare className="h-3 w-3 mr-1" />
                           Auto
@@ -465,14 +500,19 @@ export function JournalingScreen() {
                   </div>
                 </CardHeader>
                 <CardContent className={`flex flex-col ${mode === "manual" ? "flex-1" : "flex-grow"}`}>
-                  {isDateInFuture ? (
+                  {isDateRestricted ? (
                     <div className="flex-1 flex items-center justify-center">
                       <div className="text-center space-y-4 p-8">
-                        <div className="text-6xl mb-4">📅</div>
-                        <h3 className="text-xl font-semibold">Future Date Selected</h3>
+                        <div className="text-6xl mb-4">
+                          {isDateInFuture ? "📅" : "🔒"}
+                        </div>
+                        <h3 className="text-xl font-semibold">
+                          {isDateInFuture ? "Future Date Selected" : "Date Before Account Creation"}
+                        </h3>
                         <p className="text-muted-foreground max-w-md">
-                          Journaling is only available for today and past dates. 
-                          You cannot create journal entries for future dates.
+                          {isDateInFuture
+                            ? "Journaling is only available for today and past dates. You cannot create journal entries for future dates."
+                            : "You cannot create journal entries for dates before your account was created. Journaling is only available from your account creation date onwards."}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           Selected: {selectedDate.toLocaleDateString("en-US", {
@@ -482,6 +522,16 @@ export function JournalingScreen() {
                             day: "numeric",
                           })}
                         </p>
+                        {user?.createdAt && isDateBeforeAccountCreation && (
+                          <p className="text-sm text-muted-foreground">
+                            Account Created: {new Date(user.createdAt).toLocaleDateString("en-US", {
+                              weekday: "long",
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            })}
+                          </p>
+                        )}
                         <Button
                           onClick={() => setSelectedDate(new Date())}
                           className="mt-4"
@@ -501,6 +551,7 @@ export function JournalingScreen() {
                         value={journalEntry}
                         onChange={(e) => setJournalEntry(e.target.value)}
                         className="flex-1 resize-none text-base leading-relaxed min-h-[400px]"
+                        disabled={isDateRestricted}
                       />
                       <div className="flex items-center justify-between mt-4">
                         <span className="text-sm text-muted-foreground">
@@ -508,7 +559,7 @@ export function JournalingScreen() {
                         </span>
                         <Button
                           onClick={saveEntry}
-                          disabled={isSaving || !journalEntry.trim() || isDateInFuture}
+                          disabled={isSaving || !journalEntry.trim() || isDateRestricted}
                           className={
                             saveStatus === "saved"
                               ? "bg-green-600 hover:bg-green-700"
@@ -550,6 +601,7 @@ export function JournalingScreen() {
                                   variant={autoAnswers[q.id] === option && !customInputActive[q.id] ? "default" : "outline"}
                                   className="justify-start text-left h-auto py-3 px-4 min-h-[52px]"
                                   onClick={() => handleAutoAnswer(q.id, option)}
+                                  disabled={isDateRestricted}
                                 >
                                   {option}
                                 </Button>
@@ -561,6 +613,7 @@ export function JournalingScreen() {
                                     variant={customInputValues[q.id]?.trim() ? "secondary" : "outline"}
                                     className="justify-start text-left h-auto py-3 px-4 flex items-center gap-2 min-h-[52px] w-full"
                                     onClick={() => handleCustomInputClick(q.id)}
+                                    disabled={isDateRestricted}
                                   >
                                     <PencilLine className="h-4 w-4 flex-shrink-0" />
                                     <span className="truncate">{customInputValues[q.id]?.trim() || "Type Your Own"}</span>
@@ -574,6 +627,7 @@ export function JournalingScreen() {
                                       onChange={(e) => handleCustomInputChange(q.id, e.target.value)}
                                       className="h-[52px] pr-10 w-full"
                                       autoFocus
+                                      disabled={isDateRestricted}
                                     />
                                     <PencilLine className="h-4 w-4 text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                                   </>
@@ -589,7 +643,7 @@ export function JournalingScreen() {
                         </span>
                         <Button
                           onClick={saveAutoEntry}
-                          disabled={isSaving || Object.keys(autoAnswers).length === 0 || isDateInFuture}
+                          disabled={isSaving || Object.keys(autoAnswers).length === 0 || isDateRestricted}
                           className={
                             saveStatus === "saved"
                               ? "bg-green-600 hover:bg-green-700"
@@ -621,6 +675,8 @@ export function JournalingScreen() {
                   selectedDate={selectedDate}
                   onDateSelect={handleDateSelect}
                   highlightedDates={entryDates}
+                  minDate={user?.createdAt ? new Date(user.createdAt) : undefined}
+                  maxDate={new Date()}
                 />
                 <Button
                   variant="outline"
