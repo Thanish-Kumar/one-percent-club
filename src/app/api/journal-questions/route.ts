@@ -31,12 +31,30 @@ export async function GET(request: NextRequest) {
 
     const repository = getJournalQuestionRepository()
     
-    // Get or create question set for the user and date
-    const questionSet = await repository.getOrCreateQuestionSet(userUid, entryDate)
+    // Check if custom question set exists for this user and date
+    const existingSet = await repository.getQuestionSetByUserAndDate(userUid, entryDate)
+    
+    let questions
+    let isDefault = false
+    
+    if (existingSet) {
+      // User has custom questions for this date
+      questions = existingSet.questions
+      isDefault = false
+      console.log(`✅ Found existing question set for user ${userUid} on ${entryDate}`)
+    } else {
+      // Return default template WITHOUT creating a new row in database
+      questions = await repository.getDefaultQuestionSet()
+      isDefault = true
+      console.log(`📋 Returning default template for user ${userUid} on ${entryDate} (not saved to database)`)
+    }
 
     return NextResponse.json({
       success: true,
-      questions: questionSet.questions
+      questions: questions,
+      isDefault: isDefault,
+      userUid: userUid,
+      entryDate: entryDate
     })
   } catch (error) {
     console.error("Error fetching journal questions:", error)
@@ -52,64 +70,16 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/journal-questions
- * Create or update a question set for a user and date
- * 
- * Body:
- * - userUid: string
- * - entryDate: string (ISO date format)
- * - questions: Question[]
+ * DISABLED: Questions are read-only for users
+ * Only the default template can be modified by administrators directly in the database
+ * User entries/answers are saved to the journal_entries table, NOT here
  */
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json()
-    const { userUid, entryDate, questions } = body
-
-    if (!userUid || !entryDate || !questions || !Array.isArray(questions)) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: "Missing required fields: userUid, entryDate, questions" 
-        },
-        { status: 400 }
-      )
-    }
-
-    const repository = getJournalQuestionRepository()
-    
-    // Check if question set already exists
-    const existing = await repository.getQuestionSetByUserAndDate(userUid, entryDate)
-    
-    let questionSet
-    
-    if (existing) {
-      // Update existing question set
-      questionSet = await repository.updateQuestionSet(userUid, entryDate, { questions })
-    } else {
-      // Create new question set
-      questionSet = await repository.createQuestionSet({
-        userUid,
-        entryDate,
-        questions
-      })
-    }
-
-    return NextResponse.json({
-      success: true,
-      questionSet: {
-        id: questionSet?.id,
-        userUid: questionSet?.userUid,
-        entryDate: questionSet?.entryDate,
-        questions: questionSet?.questions
-      }
-    })
-  } catch (error) {
-    console.error("Error creating/updating journal question set:", error)
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: "Failed to create/update journal question set" 
-      },
-      { status: 500 }
-    )
-  }
+  return NextResponse.json(
+    { 
+      success: false, 
+      error: "Question modification is not allowed. Questions are read-only. User entries should be saved to /api/journal endpoint." 
+    },
+    { status: 403 }
+  )
 }

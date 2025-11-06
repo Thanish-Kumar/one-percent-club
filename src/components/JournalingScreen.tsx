@@ -33,19 +33,41 @@ export function JournalingScreen() {
   const [customInputValues, setCustomInputValues] = useState<Record<number, string>>({})
   const [questions, setQuestions] = useState<Question[]>([])
   const [questionsLoading, setQuestionsLoading] = useState(false)
+  const [questionsSource, setQuestionsSource] = useState<"default" | "custom" | null>(null)
 
-  // Format date to ISO string (YYYY-MM-DD)
+  // Format date to ISO string (YYYY-MM-DD) using local timezone
   const formatDateToISO = (date: Date): string => {
-    return date.toISOString().split("T")[0]
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
   }
+
+  // Check if selected date is in the future
+  const isFutureDate = (date: Date): boolean => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0) // Reset to midnight
+    const selectedDateMidnight = new Date(date)
+    selectedDateMidnight.setHours(0, 0, 0, 0) // Reset to midnight
+    return selectedDateMidnight > today
+  }
+
+  const isDateInFuture = isFutureDate(selectedDate)
 
   // Load journal questions from API for specific user and date
   const loadQuestions = async (date: Date) => {
-    if (!user) return
+    if (!user) {
+      console.log("⚠️  No user logged in, cannot load questions")
+      return
+    }
     
     setQuestionsLoading(true)
+    setQuestionsSource(null)
+    
     try {
       const dateISO = formatDateToISO(date)
+      console.log(`📅 Loading questions for user: ${user.uid}, date: ${dateISO}`)
+      
       const response = await fetch(
         `/api/journal-questions?userUid=${user.uid}&entryDate=${dateISO}`
       )
@@ -54,12 +76,21 @@ export function JournalingScreen() {
         const data = await response.json()
         if (data.success && data.questions) {
           setQuestions(data.questions)
+          // Check if this is from default template or custom
+          setQuestionsSource(data.isDefault ? "default" : "custom")
+          console.log(`✅ Loaded ${data.questions.length} questions (source: ${data.isDefault ? 'default template' : 'custom'})`)
+        } else {
+          console.error("❌ Failed to load questions: Invalid response format")
+          setQuestions([])
         }
       } else {
-        console.error("Failed to load questions")
+        const errorData = await response.json().catch(() => ({}))
+        console.error("❌ Failed to load questions:", errorData.error || response.statusText)
+        setQuestions([])
       }
     } catch (error) {
-      console.error("Error loading journal questions:", error)
+      console.error("❌ Error loading journal questions:", error)
+      setQuestions([])
     } finally {
       setQuestionsLoading(false)
     }
@@ -405,31 +436,61 @@ export function JournalingScreen() {
                         day: "numeric",
                       })}
                     </p>
-                    {/* Mode Toggle */}
-                    <div className="inline-flex rounded-lg border border-border p-1 bg-muted">
-                      <Button
-                        variant={mode === "manual" ? "default" : "ghost"}
-                        size="sm"
-                        onClick={() => setMode("manual")}
-                        className="rounded-md h-7 px-2 text-xs"
-                      >
-                        <Edit3 className="h-3 w-3 mr-1" />
-                        Manual
-                      </Button>
-                      <Button
-                        variant={mode === "auto" ? "default" : "ghost"}
-                        size="sm"
-                        onClick={() => setMode("auto")}
-                        className="rounded-md h-7 px-2 text-xs"
-                      >
-                        <CheckSquare className="h-3 w-3 mr-1" />
-                        Auto
-                      </Button>
+                    <div className="flex items-center gap-2">
+                      
+                      {/* Mode Toggle */}
+                      <div className="inline-flex rounded-lg border border-border p-1 bg-muted">
+                        <Button
+                          variant={mode === "manual" ? "default" : "ghost"}
+                          size="sm"
+                          onClick={() => setMode("manual")}
+                          className="rounded-md h-7 px-2 text-xs"
+                          disabled={isDateInFuture}
+                        >
+                          <Edit3 className="h-3 w-3 mr-1" />
+                          Manual
+                        </Button>
+                        <Button
+                          variant={mode === "auto" ? "default" : "ghost"}
+                          size="sm"
+                          onClick={() => setMode("auto")}
+                          className="rounded-md h-7 px-2 text-xs"
+                          disabled={isDateInFuture}
+                        >
+                          <CheckSquare className="h-3 w-3 mr-1" />
+                          Auto
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className={`flex flex-col ${mode === "manual" ? "flex-1" : "flex-grow"}`}>
-                  {isLoading ? (
+                  {isDateInFuture ? (
+                    <div className="flex-1 flex items-center justify-center">
+                      <div className="text-center space-y-4 p-8">
+                        <div className="text-6xl mb-4">📅</div>
+                        <h3 className="text-xl font-semibold">Future Date Selected</h3>
+                        <p className="text-muted-foreground max-w-md">
+                          Journaling is only available for today and past dates. 
+                          You cannot create journal entries for future dates.
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Selected: {selectedDate.toLocaleDateString("en-US", {
+                            weekday: "long",
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })}
+                        </p>
+                        <Button
+                          onClick={() => setSelectedDate(new Date())}
+                          className="mt-4"
+                        >
+                          Go to Today
+                        </Button>
+                      </div>
+                    </div>
+                  ) : isLoading ? (
                     <div className="flex-1 flex items-center justify-center">
                       <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                     </div>
@@ -447,7 +508,7 @@ export function JournalingScreen() {
                         </span>
                         <Button
                           onClick={saveEntry}
-                          disabled={isSaving || !journalEntry.trim()}
+                          disabled={isSaving || !journalEntry.trim() || isDateInFuture}
                           className={
                             saveStatus === "saved"
                               ? "bg-green-600 hover:bg-green-700"
@@ -528,7 +589,7 @@ export function JournalingScreen() {
                         </span>
                         <Button
                           onClick={saveAutoEntry}
-                          disabled={isSaving || Object.keys(autoAnswers).length === 0}
+                          disabled={isSaving || Object.keys(autoAnswers).length === 0 || isDateInFuture}
                           className={
                             saveStatus === "saved"
                               ? "bg-green-600 hover:bg-green-700"

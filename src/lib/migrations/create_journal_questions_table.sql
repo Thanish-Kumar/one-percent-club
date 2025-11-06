@@ -25,57 +25,89 @@ INSERT INTO journal_questions (user_uid, entry_date, questions) VALUES
   (
     'default_template',
     CURRENT_DATE,
-    '[
-      {
-        "id": 1,
-        "question": "How productive was your day today?",
-        "options": ["Very Productive", "Moderately Productive", "Not Productive"]
-      },
-      {
-        "id": 2,
-        "question": "How would you rate your energy levels?",
-        "options": ["High Energy", "Moderate Energy", "Low Energy"]
-      },
-      {
-        "id": 3,
-        "question": "Did you make progress on your key goals?",
-        "options": ["Significant Progress", "Some Progress", "No Progress"]
-      },
-      {
-        "id": 4,
-        "question": "How was your focus and concentration?",
-        "options": ["Excellent Focus", "Fair Focus", "Poor Focus"]
-      },
-      {
-        "id": 5,
-        "question": "Did you face any major challenges?",
-        "options": ["No Challenges", "Minor Challenges", "Major Challenges"]
-      },
-      {
-        "id": 6,
-        "question": "How satisfied are you with today''s outcomes?",
-        "options": ["Very Satisfied", "Somewhat Satisfied", "Not Satisfied"]
-      },
-      {
-        "id": 7,
-        "question": "Did you learn something new today?",
-        "options": ["Learned a Lot", "Learned Something", "Learned Nothing"]
-      },
-      {
-        "id": 8,
-        "question": "How well did you manage your time?",
-        "options": ["Excellent", "Good", "Poor"]
-      },
-      {
-        "id": 9,
-        "question": "Did you collaborate effectively with others?",
-        "options": ["Very Effective", "Somewhat Effective", "Not Effective"]
-      },
-      {
-        "id": 10,
-        "question": "How do you feel about tomorrow?",
-        "options": ["Excited & Ready", "Neutral", "Anxious or Uncertain"]
-      }
-    ]'::jsonb
+    '{
+      "Questions": [
+        {
+          "Question 1": "What is the current size of your medical clinic in terms of employees and patients?",
+          "Answers": [
+            "Less than 100",
+            "100 to 500",
+            "More than 500"
+          ]
+        },
+        {
+          "Question 2": "What is your current process for scheduling patient appointments?",
+          "Answers": [
+            "Manual approach (telephone calls, physical diary)",
+            "Semi-aligned system (spreadsheet, google calendar)",
+            "Integrated software"
+          ]
+        },
+        {
+          "Question 3": "What specific area of your business would you most want to improve with the custom software?",
+          "Answers": [
+            "Patients record management",
+            "Appointment scheduling",
+            "Billing and invoicing"
+          ]
+        },
+        {
+          "Question 4": "Do you currently use any specific software for managing your clinic?",
+          "Answers": [
+            "We don''t use any specific software",
+            "We use software, but it is not integrated",
+            "We use an integrated software"
+          ]
+        },
+        {
+          "Question 5": "What is your current method for storing and managing patient records?",
+          "Answers": [
+            "Paper files",
+            "Electronic files",
+            "Integrated patient management system"
+          ]
+        },
+        {
+          "Question 6": "How often does your system encounter errors that impact your clinic operations?",
+          "Answers": [
+            "Daily",
+            "Weekly",
+            "Rarely"
+          ]
+        },
+        {
+          "Question 7": "How do you currently manage your clinic''s billing and invoicing process?",
+          "Answers": [
+            "Manually",
+            "Semi-automated system",
+            "Fully automated software"
+          ]
+        },
+        {
+          "Question 8": "What is your current method for providing follow-up care to patients after an appointment?",
+          "Answers": [
+            "Call-backs",
+            "Email reminders",
+            "Automated system"
+          ]
+        },
+        {
+          "Question 9": "How do you analyze your clinic''s performance currently?",
+          "Answers": [
+            "We don''t have a structured approach",
+            "We analyze data manually",
+            "We use software analytics"
+          ]
+        },
+        {
+          "Question 10": "Where does your clinic aim to be in terms of size and service offerings in the next 5 years?",
+          "Answers": [
+            "Maintain current size and services",
+            "Expansion in terms of services offered",
+            "Expansion in terms of size and services offered"
+          ]
+        }
+      ]
+    }'::jsonb
   );
 
