@@ -454,12 +454,6 @@ export function JournalingScreen() {
                       })}
                     </p>
                     <div className="flex items-center gap-2">
-                      {/* Question Source Indicator */}
-                      {mode === "auto" && questionsSource && !questionsLoading && !isDateRestricted && (
-                        <span className="text-xs text-muted-foreground px-2 py-1 bg-muted/50 rounded">
-                          {questionsSource === "default" ? "📋 Default Questions" : "✨ Custom Questions"}
-                        </span>
-                      )}
                       
                       {/* Date Restriction Warning */}
                       {isDateInFuture && (

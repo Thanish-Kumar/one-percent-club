@@ -7,6 +7,8 @@ import {
   CrewResponseDatabaseErrorDTO
 } from '@/dto/crew-response';
 import { getDatabasePool } from '@/lib/database';
+import { getJournalQuestionRepository } from '@/repositories/journal-question';
+import { Question } from '@/models/JournalQuestion';
 
 // Helper function to handle database errors
 const handleDatabaseError = (error: any): CrewResponseDatabaseErrorDTO => {
@@ -42,6 +44,32 @@ const mapRowToCrewResponse = (row: any): CrewResponseDatabaseDTO => {
     createdAt: new Date(row.created_at),
     updatedAt: row.updated_at ? new Date(row.updated_at) : undefined,
   };
+};
+
+// Helper function to extract questions from crew response data
+const extractQuestionsFromResponse = (responseData: Record<string, any>): Question[] | null => {
+  try {
+    // Check if response has Questions array
+    if (responseData.Questions && Array.isArray(responseData.Questions)) {
+      return responseData.Questions.map((item: any, index: number) => {
+        const questionKey = `Question ${index + 1}`;
+        const questionText = item[questionKey];
+        const answers = item.Answers || [];
+        
+        return {
+          id: index + 1,
+          question: questionText,
+          options: answers
+        };
+      });
+    }
+    
+    // If no valid Questions array found, return null
+    return null;
+  } catch (error) {
+    console.error('Error extracting questions from crew response:', error);
+    return null;
+  }
 };
 
 export class AwsRdsCrewResponseRepository implements CrewResponseRepository {
@@ -80,6 +108,7 @@ export class AwsRdsCrewResponseRepository implements CrewResponseRepository {
   /**
    * Upsert crew response - Insert or Update for the same user on the same day
    * This ensures only one entry per user per day
+   * Also syncs questions to journal_questions table
    */
   async upsertCrewResponse(data: CreateCrewResponseRequestDTO): Promise<CrewResponseDatabaseDTO> {
     const client = await this.pool.connect();
@@ -87,16 +116,17 @@ export class AwsRdsCrewResponseRepository implements CrewResponseRepository {
     try {
       // Use INSERT ... ON CONFLICT to handle upsert
       // The unique constraint is on (user_uid, DATE(created_at))
+      // Return DATE(created_at) as a separate column to avoid timezone conversion issues
       const query = `
         INSERT INTO crew_responses (user_uid, request_context, request_goal, response_data, created_at)
-        VALUES ($1, $2, $3, $4, CURRENT_DATE)
+        VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
         ON CONFLICT (user_uid, DATE(created_at))
         DO UPDATE SET
           request_context = EXCLUDED.request_context,
           request_goal = EXCLUDED.request_goal,
           response_data = EXCLUDED.response_data,
           updated_at = CURRENT_TIMESTAMP
-        RETURNING *
+        RETURNING *, DATE(created_at) as entry_date
       `;
       
       const values = [
@@ -107,7 +137,18 @@ export class AwsRdsCrewResponseRepository implements CrewResponseRepository {
       ];
 
       const result = await client.query(query, values);
-      return mapRowToCrewResponse(result.rows[0]);
+      const row = result.rows[0];
+      const crewResponse = mapRowToCrewResponse(row);
+      
+      // Get the entry_date directly from the database query to avoid timezone issues
+      const entryDate = row.entry_date;
+
+      console.log(`Entry Date: ${entryDate}`);
+      
+      // Sync questions to journal_questions table using the date from database
+      await this.syncQuestionsToJournalTable(data.userUid, entryDate, data.responseData);
+      
+      return crewResponse;
     } catch (error: any) {
       throw handleDatabaseError(error);
     } finally {
@@ -277,6 +318,54 @@ export class AwsRdsCrewResponseRepository implements CrewResponseRepository {
       throw handleDatabaseError(error);
     } finally {
       client.release();
+    }
+  }
+
+  /**
+   * Sync questions from crew response to journal_questions table
+   * This updates or creates journal questions for the user and date
+   * 
+   * @param userUid - The user's UID
+   * @param entryDate - Date string (YYYY-MM-DD) directly from database to avoid timezone issues
+   * @param responseData - The crew API response data containing questions
+   */
+  private async syncQuestionsToJournalTable(
+    userUid: string, 
+    entryDate: string, 
+    responseData: Record<string, any>
+  ): Promise<void> {
+    try {
+      // Extract questions from response data
+      const questions = extractQuestionsFromResponse(responseData);
+      
+      if (!questions || questions.length === 0) {
+        console.log(`⚠️  No valid questions found in crew response for user ${userUid}. Skipping journal sync.`);
+        return;
+      }
+      
+      // Get the journal question repository
+      const journalQuestionRepo = getJournalQuestionRepository();
+      
+      // Check if questions already exist for this user and date
+      const existingQuestionSet = await journalQuestionRepo.getQuestionSetByUserAndDate(userUid, entryDate);
+      
+      if (existingQuestionSet) {
+        // Update existing question set
+        await journalQuestionRepo.updateQuestionSet(userUid, entryDate, { questions });
+        console.log(`✅ Updated journal questions for user ${userUid} on ${entryDate}`);
+      } else {
+        // Create new question set
+        await journalQuestionRepo.createQuestionSet({
+          userUid,
+          entryDate,
+          questions
+        });
+        console.log(`✅ Created journal questions for user ${userUid} on ${entryDate}`);
+      }
+    } catch (error) {
+      // Log the error but don't throw - we don't want to fail the crew response upsert
+      // if journal sync fails
+      console.error(`❌ Failed to sync questions to journal_questions table for user ${userUid}:`, error);
     }
   }
 
