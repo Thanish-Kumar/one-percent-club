@@ -1,5 +1,5 @@
 // Export journal repository
-export { JournalRepository } from './JournalRepository';
+export type { JournalRepository } from './JournalRepository';
 export { AwsRdsJournalRepository, awsRdsJournalRepository } from './AwsRdsJournalRepository';
 
 
