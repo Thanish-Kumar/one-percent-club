@@ -491,3 +491,4 @@ This is expected behavior! When a user updates their journal entry, a new soluti
 
 The both-crews API integration provides a seamless way to automatically process journal entries and generate solutions. It integrates perfectly with the existing scheduler system and handles edge cases like entry updates gracefully. The solution storage in a dedicated table makes it easy to retrieve and analyze solutions for any user or date range.
 
+

@@ -15,3 +15,4 @@ export interface GetSolutionsDTO {
   offset?: number;
 }
 
+

@@ -29,3 +29,4 @@ export interface SolutionRepository {
   deleteSolution(id: number): Promise<boolean>;
 }
 
+
