@@ -1,0 +1,51 @@
+// Script to run the is_queued column migration for journal_entries table
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+import * as fs from 'fs';
+import { database } from '../database';
+
+
+// Load environment variables
+dotenv.config({ path: '.env.local' });
+
+async function runIsQueuedMigration() {
+  console.log('🔄 Running is_queued column migration for journal_entries table...\n');
+
+  try {
+    // Test connection first
+    const connected = await database.testConnection();
+    if (!connected) {
+      throw new Error('Database connection failed');
+    }
+
+    // Read the migration file
+    const migrationPath = path.join(__dirname, '../migrations/add_is_queued_column_to_journal_entries.sql');
+    const migrationSQL = fs.readFileSync(migrationPath, 'utf-8');
+
+    // Get database client
+    const client = await database.getClient();
+
+    try {
+      // Execute migration
+      await client.query(migrationSQL);
+      console.log('✅ is_queued column added successfully!');
+      console.log('   - Column: is_queued (BOOLEAN DEFAULT FALSE)');
+      console.log('   - Index: idx_journal_entries_is_queued');
+      console.log('   - Purpose: Track entries currently queued/being processed\n');
+    } finally {
+      client.release();
+    }
+
+    // Close database connection
+    await database.close();
+    console.log('✅ Migration completed successfully!\n');
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Migration failed:', error);
+    await database.close();
+    process.exit(1);
+  }
+}
+
+runIsQueuedMigration();
+

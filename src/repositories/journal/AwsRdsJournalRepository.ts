@@ -27,6 +27,8 @@ export class AwsRdsJournalRepository implements JournalRepository {
         DO UPDATE SET 
           content = EXCLUDED.content,
           word_count = EXCLUDED.word_count,
+          is_processed_for_solutions = FALSE,
+          is_queued = FALSE,
           updated_at = CURRENT_TIMESTAMP
         RETURNING *
       `;
@@ -135,6 +137,72 @@ export class AwsRdsJournalRepository implements JournalRepository {
     }
   }
 
+  async getUnprocessedEntriesForDate(entryDate: string): Promise<JournalEntry[]> {
+    try {
+      const query = `
+        SELECT * FROM journal_entries
+        WHERE entry_date = $1
+        AND is_processed_for_solutions = FALSE
+        AND is_queued = FALSE
+        ORDER BY user_uid
+      `;
+
+      const result = await this.pool.query(query, [entryDate]);
+      return result.rows.map(row => this.mapRowToJournalEntry(row));
+    } catch (error) {
+      console.error('Error getting unprocessed entries:', error);
+      throw new Error('Failed to retrieve unprocessed entries');
+    }
+  }
+
+  async markEntryAsProcessed(id: number): Promise<boolean> {
+    try {
+      const query = `
+        UPDATE journal_entries
+        SET is_processed_for_solutions = TRUE
+        WHERE id = $1
+      `;
+
+      const result = await this.pool.query(query, [id]);
+      return result.rowCount ? result.rowCount > 0 : false;
+    } catch (error) {
+      console.error('Error marking entry as processed:', error);
+      throw new Error('Failed to mark entry as processed');
+    }
+  }
+
+  async markEntryAsQueued(id: number): Promise<boolean> {
+    try {
+      const query = `
+        UPDATE journal_entries
+        SET is_queued = TRUE
+        WHERE id = $1
+      `;
+
+      const result = await this.pool.query(query, [id]);
+      return result.rowCount ? result.rowCount > 0 : false;
+    } catch (error) {
+      console.error('Error marking entry as queued:', error);
+      throw new Error('Failed to mark entry as queued');
+    }
+  }
+
+  async markEntryAsUnqueued(id: number): Promise<boolean> {
+    try {
+      const query = `
+        UPDATE journal_entries
+        SET is_queued = FALSE
+        WHERE id = $1
+      `;
+
+      const result = await this.pool.query(query, [id]);
+      return result.rowCount ? result.rowCount > 0 : false;
+    } catch (error) {
+      console.error('Error marking entry as unqueued:', error);
+      throw new Error('Failed to mark entry as unqueued');
+    }
+  }
+
   private mapRowToJournalEntry(row: any): JournalEntry {
     return {
       id: row.id,
@@ -144,7 +212,12 @@ export class AwsRdsJournalRepository implements JournalRepository {
       wordCount: row.word_count,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at),
+      isProcessedForSolutions: row.is_processed_for_solutions || false,
+      isQueued: row.is_queued || false,
     };
   }
 }
+
+// Export singleton instance
+export const awsRdsJournalRepository = new AwsRdsJournalRepository();
 

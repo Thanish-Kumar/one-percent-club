@@ -17,6 +17,8 @@
     "db:migrate:journal-questions": "tsx src/lib/scripts/run-journal-questions-migration.ts",
     "db:migrate:crew-responses": "tsx src/lib/scripts/run-crew-response-migration.ts",
     "db:migrate:crew-responses-update": "tsx src/lib/scripts/run-crew-response-update-migration.ts",
+    "db:migrate:solutions": "tsx src/lib/scripts/run-solutions-migrations.ts",
+    "db:migrate:is-queued": "tsx src/lib/scripts/run-is-queued-migration.ts",
     "db:test": "tsx src/lib/scripts/test-connection.ts"
   },
   "dependencies": {

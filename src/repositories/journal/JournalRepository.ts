@@ -35,5 +35,25 @@ export interface JournalRepository {
    * Get dates that have entries for a user (for calendar highlighting)
    */
   getEntryDates(userUid: string, year: number, month: number): Promise<Date[]>;
+
+  /**
+   * Get unprocessed journal entries for a specific date
+   */
+  getUnprocessedEntriesForDate(entryDate: string): Promise<JournalEntry[]>;
+
+  /**
+   * Mark a journal entry as processed for solutions
+   */
+  markEntryAsProcessed(id: number): Promise<boolean>;
+
+  /**
+   * Mark a journal entry as queued for processing
+   */
+  markEntryAsQueued(id: number): Promise<boolean>;
+
+  /**
+   * Mark a journal entry as unqueued (not in processing queue)
+   */
+  markEntryAsUnqueued(id: number): Promise<boolean>;
 }
 

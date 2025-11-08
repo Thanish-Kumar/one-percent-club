@@ -1,7 +1,7 @@
 // Journal Service - Business logic layer
 // Following clean architecture principles
 
-import { JournalRepository } from '@/repositories/journal/JournalRepository';
+import { JournalRepository } from '@/repositories/journal';
 import { JournalEntry } from '@/models/JournalEntry';
 import {
   CreateJournalEntryDTO,

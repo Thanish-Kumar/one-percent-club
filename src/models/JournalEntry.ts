@@ -7,5 +7,7 @@ export interface JournalEntry {
   wordCount: number;
   createdAt: Date;
   updatedAt: Date;
+  isProcessedForSolutions: boolean;
+  isQueued: boolean;
 }
 

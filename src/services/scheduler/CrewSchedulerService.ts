@@ -1,6 +1,7 @@
 import * as cron from 'node-cron';
 import { awsRdsUserRepository } from '@/repositories/user/AwsRdsUserRepository';
 import { awsRdsCrewResponseRepository } from '@/repositories/crew-response/AwsRdsCrewResponseRepository';
+import { bothCrewsService } from '@/services/both-crews';
 
 interface CrewApiRequestBody {
   customer_business_background_latest: string | null;
@@ -207,6 +208,12 @@ export class CrewSchedulerService {
 
       console.log(`[${new Date().toISOString()}] Crew scheduler task completed.`);
       console.log(`Summary: ${successCount} created, ${skippedCount} skipped (already captured today), ${errorCount} failed`);
+
+      // After processing all users, queue today's journal entries for background processing
+      console.log('\n🔄 Queueing both-crews processing for journal entries...');
+      await bothCrewsService.processTodayEntries();
+      const queueStatus = bothCrewsService.getQueueStatus();
+      console.log(`✅ Both-crews entries queued - Queue size: ${queueStatus.queueSize}, Processing: ${queueStatus.isProcessing}`);
     } catch (error) {
       console.error('Error in scheduled task:', error);
     }

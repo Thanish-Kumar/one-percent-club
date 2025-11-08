@@ -2,11 +2,8 @@
 // Following dependency injection pattern
 
 import { JournalService } from './JournalService';
-import { AwsRdsJournalRepository } from '@/repositories/journal/AwsRdsJournalRepository';
+import { awsRdsJournalRepository } from '@/repositories/journal';
 
-// Create repository instance
-const journalRepository = new AwsRdsJournalRepository();
-
-// Create service instance with injected repository
-export const journalService = new JournalService(journalRepository);
+// Create service instance with injected repository (using singleton)
+export const journalService = new JournalService(awsRdsJournalRepository);
 
