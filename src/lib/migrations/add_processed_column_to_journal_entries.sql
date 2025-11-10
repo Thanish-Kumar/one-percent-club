@@ -13,3 +13,4 @@ COMMENT ON COLUMN journal_entries.is_processed_for_solutions IS
 'Indicates if this journal entry has been processed and sent to the both-crews API';
 
 
+
