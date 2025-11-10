@@ -9,7 +9,7 @@ export interface User {
   emailVerified: boolean;
   createdAt?: Date;
   updatedAt?: Date;
-  useCase?: 'Personal' | 'Professional' | 'Business';
+  useCase?: 'Personal Growth' | 'Professional Growth' | 'Own Business Growth';
   goal?: 'Sustainable growth' | 'Rapid growth';
   context?: string;
 }

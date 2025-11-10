@@ -10,7 +10,7 @@ export interface CreateUserRequestDTO {
   lastName?: string;
   photoURL: string | null;
   emailVerified: boolean;
-  useCase?: 'Personal' | 'Professional' | 'Business';
+  useCase?: 'Personal Growth' | 'Professional Growth' | 'Own Business Growth';
   goal?: 'Sustainable growth' | 'Rapid growth';
   context?: string;
 }

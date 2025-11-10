@@ -9,7 +9,7 @@ interface SignupFormData {
   email: string;
   password: string;
   confirmPassword: string;
-  useCase: 'Personal' | 'Professional' | 'Business';
+  useCase: 'Personal Growth' | 'Professional Growth' | 'Own Business Growth';
   goal: 'Sustainable growth' | 'Rapid growth';
   context: string;
 }
@@ -21,7 +21,7 @@ export default function SignupForm() {
     email: '',
     password: '',
     confirmPassword: '',
-    useCase: 'Personal',
+    useCase: 'Personal Growth',
     goal: 'Sustainable growth',
     context: '',
   });
@@ -173,9 +173,9 @@ export default function SignupForm() {
             value={formData.useCase}
             onChange={handleChange}
           >
-            <option value="Personal">Personal</option>
-            <option value="Professional">Professional</option>
-            <option value="Business">Business</option>
+            <option value="Personal Growth">Personal Growth</option>
+            <option value="Professional Growth">Professional Growth</option>
+            <option value="Own Business Growth">Own Business Growth</option>
           </select>
         </div>
 
@@ -208,8 +208,15 @@ export default function SignupForm() {
 
         <div>
           <label htmlFor="context" className="block text-sm font-medium text-gray-700">
-            About your business?
-            <span className="inline-block ml-2 cursor-pointer" title="Describe your business or work context (e.g., healthcare company providing SaaS services to hospitals)">
+            {formData.useCase === 'Own Business Growth' ? 'About your business?' : 'Area of focus'}
+            <span 
+              className="inline-block ml-2 cursor-pointer" 
+              title={
+                formData.useCase === 'Own Business Growth' 
+                  ? "Tell us briefly about your business"
+                  : "Tell us about the area of focus we should target on growth"
+              }
+            >
               <svg className="w-4 h-4 inline-block text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -221,7 +228,11 @@ export default function SignupForm() {
             type="text"
             required
             className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            placeholder="healthcare company providing SaaS service to hospitals"
+            placeholder={
+              formData.useCase === 'Own Business Growth'
+                ? "e.g., healthcare company providing SaaS service to hospitals"
+                : "e.g., leadership skills, financial management, health and fitness"
+            }
             value={formData.context}
             onChange={handleChange}
           />

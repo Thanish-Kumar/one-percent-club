@@ -10,7 +10,7 @@ export interface SignupRequestDTO {
   lastName: string;
   email: string;
   password: string;
-  useCase: 'Personal' | 'Professional' | 'Business';
+  useCase: 'Personal Growth' | 'Professional Growth' | 'Own Business Growth';
   goal: 'Sustainable growth' | 'Rapid growth';
   context: string;
 }
