@@ -14,7 +14,7 @@ interface SessionState {
 
 interface AuthContextType extends SessionState {
   login: (email: string, password: string) => Promise<void>;
-  signup: (firstName: string, lastName: string, email: string, password: string, useCase: 'Personal' | 'Professional' | 'Business', goal: 'Sustainable growth' | 'Rapid growth', context: string) => Promise<void>;
+  signup: (firstName: string, lastName: string, email: string, password: string, useCase: 'Personal Growth' | 'Professional Growth' | 'Own Business Growth', goal: 'Sustainable growth' | 'Rapid growth', context: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<void>;
 }
@@ -88,7 +88,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const signup = async (firstName: string, lastName: string, email: string, password: string, useCase: 'Personal' | 'Professional' | 'Business', goal: 'Sustainable growth' | 'Rapid growth', context: string) => {
+  const signup = async (firstName: string, lastName: string, email: string, password: string, useCase: 'Personal Growth' | 'Professional Growth' | 'Own Business Growth', goal: 'Sustainable growth' | 'Rapid growth', context: string) => {
     try {
       setSessionState(prev => ({ ...prev, isLoading: true }));
       

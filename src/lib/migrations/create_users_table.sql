@@ -10,13 +10,13 @@ CREATE TABLE IF NOT EXISTS users (
     last_name VARCHAR(100),
     photo_url TEXT,
     email_verified BOOLEAN DEFAULT FALSE,
-    use_case VARCHAR(50) CHECK (use_case IN ('Personal', 'Professional', 'Business')),
+    use_case VARCHAR(50) CHECK (use_case IN ('Personal Growth', 'Professional Growth', 'Own Business Growth')),
     goal VARCHAR(50) CHECK (goal IN ('Sustainable growth', 'Rapid growth')),
     context TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
-    CONSTRAINT chk_use_case CHECK (use_case IS NULL OR use_case IN ('Personal', 'Professional', 'Business')),
+    CONSTRAINT chk_use_case CHECK (use_case IS NULL OR use_case IN ('Personal Growth', 'Professional Growth', 'Own Business Growth')),
     CONSTRAINT chk_goal CHECK (goal IS NULL OR goal IN ('Sustainable growth', 'Rapid growth'))
 );
 

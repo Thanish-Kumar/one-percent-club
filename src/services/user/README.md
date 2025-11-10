@@ -80,7 +80,7 @@ CREATE TABLE users (
     last_name VARCHAR(100),
     photo_url TEXT,
     email_verified BOOLEAN DEFAULT FALSE,
-    use_case VARCHAR(50) CHECK (use_case IN ('Personal', 'Professional', 'Business')),
+    use_case VARCHAR(50) CHECK (use_case IN ('Personal Growth', 'Professional Growth', 'Own Business Growth')),
     goal VARCHAR(50) CHECK (goal IN ('Sustainable growth', 'Rapid growth')),
     context TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
